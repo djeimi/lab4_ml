@@ -45,8 +45,7 @@ class BaseDescent:
         pass
 
     def calc_loss(self, x: np.ndarray, y: np.ndarray) -> float:
-        y_pred = self.predict(x)
-        return mean_squared_error(y, y_pred)
+        return np.mean(np.power((self.predict(x) - 2), 2))
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         return np.dot(x, self.w)
@@ -61,7 +60,7 @@ class VanillaGradientDescent(BaseDescent):
     def calc_gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         errors = np.dot(x, self.w) - y
         gradient = 2 * np.dot(x.T, errors) / x.shape[0]
-        return gradient.mean(axis=1)
+        return gradient
 
 
 class StochasticDescent(VanillaGradientDescent):
@@ -73,17 +72,8 @@ class StochasticDescent(VanillaGradientDescent):
         self.dimension = dimension
 
     def calc_gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        n_batches = x.shape[0] // self.batch_size
-        gradients = np.zeros_like(self.w)
-        for i in range(n_batches):
-            batch_x = x[i * self.batch_size: (i + 1) * self.batch_size]
-            batch_y = y[i * self.batch_size: (i + 1) * self.batch_size]
-            batch_gradient = np.zeros(self.dimension)
-            for j in range(self.batch_size):
-                gradient = super().calc_gradient(batch_x[j], batch_y[j])
-                batch_gradient += gradient
-            gradients += batch_gradient / self.batch_size
-        return gradients
+        index = np.randint(y.shape[0], size=self.batch_size)
+        return super().calc_gradient(x[index, :], y[index])
 
 
 class MomentumDescent(VanillaGradientDescent):
@@ -114,11 +104,12 @@ class Adam(VanillaGradientDescent):
 
     def update_weights(self, gradient: np.ndarray) -> np.ndarray:
         self.iteration += 1
-        m_corrected = self.m / (1 - self.beta_1 ** self.iteration)
-        v_corrected = self.v / (1 - self.beta_2 ** self.iteration)
 
         self.m = self.beta_1 * self.m + (1 - self.beta_1) * gradient
         self.v = self.beta_2 * self.v + (1 - self.beta_2) * gradient ** 2
+
+        m_corrected = self.m / (1 - self.beta_1 ** self.iteration)
+        v_corrected = self.v / (1 - self.beta_2 ** self.iteration)
 
         self.w -= self.lr() * m_corrected / (np.sqrt(v_corrected) + self.eps)
         return -m_corrected / (np.sqrt(v_corrected) + self.eps)

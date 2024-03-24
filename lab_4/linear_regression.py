@@ -18,21 +18,18 @@ class LinearRegression:
         self.loss_history: List[float] = []
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> LinearRegression:
-        prev_weights = self.descent.w.copy()
         self.loss_history.append(self.calc_loss(x, y))
 
         for i in range(self.max_iter):
-            self.descent.step(x, y)
-            curr_weights = self.descent.w
+            diff = self.descent.step(x, y)
 
-            if np.linalg.norm(prev_weights - curr_weights) < self.tolerance:
+            if np.linalg.norm(diff) < self.tolerance:
                 self.loss_history.append(self.calc_loss(x, y))
                 break
 
-            if np.isnan(curr_weights).any():
+            if np.isnan(self.descent.w).any():
                 raise ValueError("Вектор весов содержит NaN")
 
-            prev_weights = curr_weights
             self.loss_history.append(self.calc_loss(x, y))
 
         return self
