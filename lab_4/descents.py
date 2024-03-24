@@ -45,7 +45,7 @@ class BaseDescent:
         pass
 
     def calc_loss(self, x: np.ndarray, y: np.ndarray) -> float:
-        return np.mean(np.power((self.predict(x) - 2), 2))
+        return np.mean(np.power((self.predict(x) - y), 2))
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         return np.dot(x, self.w)

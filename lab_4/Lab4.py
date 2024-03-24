@@ -101,9 +101,9 @@ regression = linear_regression.LinearRegression(
 # y_train = y_train.values
 # y_train = np.reshape(y_train, (-1, 1))
 
-n = 5000  # количество первых значений
+n = 5000
 X_train_subset = X_train[:n]
-y_train_subset = y_train[:n]
+y_train_subset = y_train[:n].to_numpy()
 
 regression.fit(X_train_subset, y_train_subset)
 
