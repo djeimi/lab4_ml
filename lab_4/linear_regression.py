@@ -17,11 +17,14 @@ class LinearRegression:
 
         self.loss_history: List[float] = []
 
+        self.n_iter_ = 0#добавлено для 5.1
+
     def fit(self, x: np.ndarray, y: np.ndarray) -> LinearRegression:
         self.loss_history.append(self.calc_loss(x, y))
 
         for i in range(self.max_iter):
             diff = self.descent.step(x, y)
+            self.n_iter_ += 1
 
             if np.linalg.norm(diff) < self.tolerance:
                 self.loss_history.append(self.calc_loss(x, y))

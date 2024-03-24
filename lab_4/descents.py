@@ -4,8 +4,6 @@ from enum import Enum
 from typing import Dict
 from typing import Type
 
-from sklearn.metrics import mean_squared_error
-
 import numpy as np
 
 
@@ -48,7 +46,7 @@ class BaseDescent:
         return np.mean(np.power((self.predict(x) - y), 2))
 
     def predict(self, x: np.ndarray) -> np.ndarray:
-        return np.dot(x, self.w)
+        return x @ self.w
 
 
 class VanillaGradientDescent(BaseDescent):
@@ -58,8 +56,8 @@ class VanillaGradientDescent(BaseDescent):
         return -step_size * gradient
 
     def calc_gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        errors = np.dot(x, self.w) - y
-        gradient = 2 * np.dot(x.T, errors) / x.shape[0]
+        errors = self.predict(x) - y
+        gradient = 2 * x.T @ errors / x.shape[0]
         return gradient
 
 
@@ -72,7 +70,7 @@ class StochasticDescent(VanillaGradientDescent):
         self.dimension = dimension
 
     def calc_gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        index = np.randint(y.shape[0], size=self.batch_size)
+        index = np.random.randint(y.shape[0], size=self.batch_size)
         return super().calc_gradient(x[index, :], y[index])
 
 
