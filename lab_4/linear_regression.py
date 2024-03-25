@@ -31,7 +31,7 @@ class LinearRegression:
                 break
 
             if np.isnan(self.descent.w).any():
-                raise ValueError("Вектор весов содержит NaN")
+                break
 
             self.loss_history.append(self.calc_loss(x, y))
 

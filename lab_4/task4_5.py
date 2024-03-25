@@ -125,7 +125,7 @@ fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 8))
 #Каждый метод лучше предыдущего из нашего списка.
 
 #Задание 5.1
-alphas = np.logspace(-4, 1, 10)
+alphas = np.logspace(-3, 2, 20)
 
 results = {}
 
@@ -158,8 +158,7 @@ for i, descent_name in enumerate(descent_names):
         descent_config['kwargs']['batch_size'] = batch_size
 
     best_alpha = None
-    best_r2_train = float('-inf')
-    best_r2_val = float('-inf')
+    best_loss = float('+inf')
     errors_train = []
     errors_val = []
     iterations = []
@@ -176,34 +175,35 @@ for i, descent_name in enumerate(descent_names):
         n = 5000
         X_train_subset = X_train[:n]
         y_train_subset = y_train[:n].to_numpy()
+        X_val_subset = X_val[:n]
+        y_val_subset = y_val[:n].to_numpy()
 
         regression.fit(X_train_subset, y_train_subset)
 
-        r2_train = calculate_r2_score(y_train, regression.predict(X_train))
-        r2_val = calculate_r2_score(y_val, regression.predict(X_val))
+        r2_train = calculate_r2_score(y_train_subset, regression.predict(X_train_subset))
+        r2_val = calculate_r2_score(y_val_subset, regression.predict(X_val_subset))
 
-        error_train = regression.descent.calc_loss(X_train, y_train)
-        error_val = regression.descent.calc_loss(X_val, y_val)
+        error_train = regression.descent.calc_loss(X_train_subset, y_train_subset)
+        error_val = regression.descent.calc_loss(X_val_subset, y_val_subset)
 
         errors_train.append(error_train)
         errors_val.append(error_val)
         iterations.append(regression.n_iter_)
+        print(f'Error_val: {error_val}')
 
-        if r2_train > best_r2_train and r2_val > best_r2_val:
-            best_r2_train = r2_train
-            best_r2_val = r2_val
+        if error_val < best_loss:
+            best_loss = error_val
             best_alpha = alpha
 
     results[descent_name] = {
         'best_alpha': best_alpha,
-        'best_r2_train': best_r2_train,
-        'best_r2_val': best_r2_val,
+        'best_r2_val': best_loss,
         'errors_train': errors_train,
         'errors_val': errors_val,
         'iterations': iterations
     }
 
-    print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, R² на тренировочном наборе: {best_r2_train}, на валидационном наборе: {best_r2_val}")
+    print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, ошибка на валидационном наборе: {best_loss}")
 
 fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 8))
 

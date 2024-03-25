@@ -114,29 +114,6 @@ class Adam(VanillaGradientDescent):
 
 
 class BaseDescentReg(BaseDescent):
-    """
-    Базовый класс для градиентного спуска с регуляризацией.
-
-    Параметры
-    ----------
-    *args : tuple
-        Аргументы, передаваемые в базовый класс.
-    mu : float, optional
-        Коэффициент регуляризации. По умолчанию равен 0.
-    **kwargs : dict
-        Ключевые аргументы, передаваемые в базовый класс.
-
-    Атрибуты
-    ----------
-    mu : float
-        Коэффициент регуляризации.
-
-    Методы
-    -------
-    calc_gradient(x: np.ndarray, y: np.ndarray) -> np.ndarray
-        Вычисление градиента функции потерь с учетом L2 регуляризации по весам.
-    """
-
     def __init__(self, *args, mu: float = 0, **kwargs):
         """
         Инициализация базового класса для градиентного спуска с регуляризацией.
@@ -145,22 +122,19 @@ class BaseDescentReg(BaseDescent):
 
         self.mu = mu
 
+    def step(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
+        return self.update_weights(self.calc_gradient(x, y))
+
+    def update_weights(self, gradient: np.ndarray) -> np.ndarray:
+        pass
+
+    def calc_loss(self, x: np.ndarray, y: np.ndarray) -> float:
+        return np.mean(np.power((self.predict(x) - y), 2))
+
+    def predict(self, x: np.ndarray) -> np.ndarray:
+        return x @ self.w
+
     def calc_gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        """
-        Вычисление градиента функции потерь и L2 регуляризации по весам.
-
-        Parameters
-        ----------
-        x : np.ndarray
-            Массив признаков.
-        y : np.ndarray
-            Массив целевых переменных.
-
-        Returns
-        -------
-        np.ndarray
-            Градиент функции потерь с учетом L2 регуляризации по весам.
-        """
         l2_gradient: np.ndarray = np.zeros_like(x.shape[1])  
 
         return super().calc_gradient(x, y) + l2_gradient * self.mu
