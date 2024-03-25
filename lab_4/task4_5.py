@@ -80,7 +80,7 @@ X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1111, random_state=42)
 
 dimension = x.shape[1]
-max_iter = 10000
+max_iter = 500
 tolerance = 0.2
 batch_size = 13
 
@@ -142,6 +142,21 @@ def calculate_r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     ss_res = np.sum(np.power(y_true - y_pred, 2))
     ss_tot = np.sum(np.power(y_true - mean_y_true, 2))
     return 1 - (ss_res / ss_tot)
+#
+# x = data[numeric + other]
+# y = data['log_price']
+#
+# column_transformer = ColumnTransformer([
+#     ('scaling', StandardScaler(), numeric)
+# ])
+#
+# x = column_transformer.fit_transform(x)
+#
+# X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+# X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1111, random_state=42)
+#
+# dimension = x.shape[1]
+#
 
 
 for i, descent_name in enumerate(descent_names):
@@ -172,19 +187,19 @@ for i, descent_name in enumerate(descent_names):
             max_iter=max_iter
         )
 
-        n = 5000
-        X_train_subset = X_train[:n]
-        y_train_subset = y_train[:n].to_numpy()
-        X_val_subset = X_val[:n]
-        y_val_subset = y_val[:n].to_numpy()
+        # n = 5000
+        # X_train_subset = X_train[:n]
+        # y_train_subset = y_train[:n].to_numpy()
+        # X_val_subset = X_val[:n]
+        # y_val_subset = y_val[:n].to_numpy()
 
-        regression.fit(X_train_subset, y_train_subset)
+        regression.fit(X_train, y_train.to_numpy())
 
-        r2_train = calculate_r2_score(y_train_subset, regression.predict(X_train_subset))
-        r2_val = calculate_r2_score(y_val_subset, regression.predict(X_val_subset))
+        r2_train = calculate_r2_score(y_train, regression.predict(X_train))
+        r2_val = calculate_r2_score(y_val, regression.predict(X_val))
 
-        error_train = regression.descent.calc_loss(X_train_subset, y_train_subset)
-        error_val = regression.descent.calc_loss(X_val_subset, y_val_subset)
+        error_train = regression.descent.calc_loss(X_train, y_train)
+        error_val = regression.descent.calc_loss(X_val, y_val)
 
         errors_train.append(error_train)
         errors_val.append(error_val)
