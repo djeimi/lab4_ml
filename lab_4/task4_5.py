@@ -125,9 +125,10 @@ fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 8))
 #Каждый метод лучше предыдущего из нашего списка.
 
 #Задание 5.1
-alphas = np.logspace(-3, 2, 20)
+alphas = np.logspace(-3, 2, 10)
 
 results = {}
+loss_histories = {}
 
 
 def calculate_r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -142,21 +143,6 @@ def calculate_r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     ss_res = np.sum(np.power(y_true - y_pred, 2))
     ss_tot = np.sum(np.power(y_true - mean_y_true, 2))
     return 1 - (ss_res / ss_tot)
-#
-# x = data[numeric + other]
-# y = data['log_price']
-#
-# column_transformer = ColumnTransformer([
-#     ('scaling', StandardScaler(), numeric)
-# ])
-#
-# x = column_transformer.fit_transform(x)
-#
-# X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
-# X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.1111, random_state=42)
-#
-# dimension = x.shape[1]
-#
 
 
 for i, descent_name in enumerate(descent_names):
@@ -176,7 +162,6 @@ for i, descent_name in enumerate(descent_names):
     best_loss = float('+inf')
     errors_train = []
     errors_val = []
-    iterations = []
 
     for alpha in alphas:
         descent_config['kwargs']['lambda_'] = alpha
@@ -195,6 +180,9 @@ for i, descent_name in enumerate(descent_names):
 
         regression.fit(X_train, y_train.to_numpy())
 
+        if not np.isnan(regression.descent.w).any():
+            loss_histories[(descent_name, alpha)] = regression.loss_history
+
         r2_train = calculate_r2_score(y_train, regression.predict(X_train))
         r2_val = calculate_r2_score(y_val, regression.predict(X_val))
 
@@ -203,8 +191,6 @@ for i, descent_name in enumerate(descent_names):
 
         errors_train.append(error_train)
         errors_val.append(error_val)
-        iterations.append(regression.n_iter_)
-        print(f'Error_val: {error_val}')
 
         if error_val < best_loss:
             best_loss = error_val
@@ -214,28 +200,27 @@ for i, descent_name in enumerate(descent_names):
         'best_alpha': best_alpha,
         'best_r2_val': best_loss,
         'errors_train': errors_train,
-        'errors_val': errors_val,
-        'iterations': iterations
+        'errors_val': errors_val
     }
 
     print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, ошибка на валидационном наборе: {best_loss}")
 
 fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 8))
 
-for i, (descent_name, data) in enumerate(results.items()):
+for i, descent_name in enumerate(descent_names):
     row = i // ncols
     col = i % ncols
 
-    ax = axs[row, col] if nrows * ncols > 1 else axs
+    for alpha in alphas:
+        axs[row, col].plot(loss_histories[(descent_name, alpha)], label=f'α = {alpha}')
 
-    ax.plot(data['iterations'], data['errors_train'], label='Тренировочный набор')
-    ax.plot(data['iterations'], data['errors_val'], label='Валидационный набор')
-    ax.set_title(f'Зависимость ошибки от количества итераций для {descent_name}')
-    ax.set_xlabel('Количество итераций')
-    ax.set_ylabel('Ошибка')
-    ax.legend()
+    axs[row, col].set_title(f'Loss History for {descent_name}')
+    axs[row, col].set_xlabel('Iteration')
+    axs[row, col].set_ylabel('Loss')
+    axs[row, col].legend()
 
 plt.tight_layout()
+plt.show()
 
 #Задание 5.2
 fig, ax = plt.subplots(figsize=(10, 6))
