@@ -109,8 +109,10 @@ class Adam(VanillaGradientDescent):
         m_corrected = self.m / (1 - self.beta_1 ** self.iteration)
         v_corrected = self.v / (1 - self.beta_2 ** self.iteration)
 
-        self.w -= self.lr() * m_corrected / (np.sqrt(v_corrected) + self.eps)
-        return -m_corrected / (np.sqrt(v_corrected) + self.eps)
+        diff_w = self.lr() * m_corrected / (np.sqrt(v_corrected + self.eps))
+
+        self.w -= diff_w
+        return -diff_w
 
 
 class BaseDescentReg(BaseDescent):

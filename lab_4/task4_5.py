@@ -81,7 +81,7 @@ X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.
 
 dimension = x.shape[1]
 max_iter = 500
-tolerance = 0.2
+tolerance = 1e-3
 batch_size = 13
 
 descent_names = ['full', 'stochastic', 'momentum', 'adam']
@@ -125,11 +125,12 @@ fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 8))
 #Каждый метод лучше предыдущего из нашего списка.
 
 #Задание 5.1
-alphas = np.logspace(-3, 2, 10)
+alphas = np.logspace(-3, 2, 5)
 
 results = {}
 loss_histories = {}
 
+train_error_histories = {}
 
 def calculate_r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
@@ -145,26 +146,125 @@ def calculate_r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return 1 - (ss_res / ss_tot)
 
 
+# for i, descent_name in enumerate(descent_names):
+#     ax = axs[i // ncols, i % ncols]
+#
+#     descent_config = {
+#         'descent_name': descent_name,
+#         'kwargs': {
+#             'dimension': dimension
+#         }
+#     }
+#
+#     if descent_name == 'stochastic':
+#         descent_config['kwargs']['batch_size'] = batch_size
+#
+#     best_alpha = None
+#     best_loss = float('+inf')
+#     errors_train = []
+#     errors_val = []
+#
+#     for alpha in alphas:
+#         descent_config['kwargs']['lambda_'] = alpha
+#
+#         regression = linear_regression.LinearRegression(
+#             descent_config=descent_config,
+#             tolerance=tolerance,
+#             max_iter=max_iter
+#         )
+#
+#         # n = 5000
+#         # X_train_subset = X_train[:n]
+#         # y_train_subset = y_train[:n].to_numpy()
+#         # X_val_subset = X_val[:n]
+#         # y_val_subset = y_val[:n].to_numpy()
+#
+#         regression.fit(X_train, y_train.to_numpy())
+#
+#         if not np.isnan(regression.descent.w).any():
+#             loss_histories[(descent_name, alpha)] = regression.loss_history
+#
+#         r2_train = calculate_r2_score(y_train, regression.predict(X_train))
+#         r2_val = calculate_r2_score(y_val, regression.predict(X_val))
+#
+#         error_train = regression.descent.calc_loss(X_train, y_train)
+#         error_val = regression.descent.calc_loss(X_val, y_val)
+#
+#         errors_train.append(error_train)
+#         errors_val.append(error_val)
+#
+#         if error_val < best_loss:
+#             best_loss = error_val
+#             best_alpha = alpha
+#
+#             train_error_histories[descent_name] = regression.loss_history
+#
+#     results[descent_name] = {
+#         'best_alpha': best_alpha,
+#         'best_r2_val': best_loss,
+#         'errors_train': errors_train,
+#         'errors_val': errors_val
+#     }
+#
+#     print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, ошибка на валидационном наборе: {best_loss}")
+
+fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 8))
+
 for i, descent_name in enumerate(descent_names):
-    ax = axs[i // ncols, i % ncols]
-
-    descent_config = {
-        'descent_name': descent_name,
-        'kwargs': {
-            'dimension': dimension
-        }
-    }
-
-    if descent_name == 'stochastic':
-        descent_config['kwargs']['batch_size'] = batch_size
-
-    best_alpha = None
-    best_loss = float('+inf')
-    errors_train = []
-    errors_val = []
+    row = i // ncols
+    col = i % ncols
 
     for alpha in alphas:
-        descent_config['kwargs']['lambda_'] = alpha
+        if (descent_name, alpha) in loss_histories:
+            log_loss_history = np.log(loss_histories[(descent_name, alpha)])
+            axs[row, col].plot(log_loss_history, label=f'α = {alpha}')
+
+    axs[row, col].set_title(f'Loss History for {descent_name}')
+    axs[row, col].set_xlabel('Iteration')
+    axs[row, col].set_ylabel('Loss')
+    axs[row, col].set_yscale("log")
+    axs[row, col].legend()
+
+# plt.tight_layout()
+# plt.show()
+#два раза логарифм, чтобы лучше было видно
+
+#Задание 5.2
+# fig, ax = plt.subplots(figsize=(10, 6))
+#
+# for descent_name in descent_names:
+#     best_alpha = results[descent_name]['best_alpha']
+#     if (descent_name, best_alpha) in loss_histories:
+#         ax.plot(loss_histories[(descent_name, best_alpha)], label=f'{descent_name}, α={best_alpha}')
+#
+# ax.set_xlabel('Iteration')
+# ax.set_ylabel('Training Error')
+# ax.set_yscale('log')
+# ax.legend()
+
+# plt.tight_layout()
+# plt.show()
+
+#Задание 6
+batch_sizes = np.arange(5, 500, 10)
+k = 5
+
+avg_times_list = []
+avg_iterations_list = []
+
+for batch_size in batch_sizes:
+    print(f"Batch size: {batch_size}")
+    times = []
+    iterations = []
+
+    for _ in range(k):
+        descent_config = {
+            'descent_name': 'stochastic',
+            'kwargs': {
+                'dimension': dimension,
+                'batch_size': batch_size
+            }
+        }
 
         regression = linear_regression.LinearRegression(
             descent_config=descent_config,
@@ -175,126 +275,34 @@ for i, descent_name in enumerate(descent_names):
         # n = 5000
         # X_train_subset = X_train[:n]
         # y_train_subset = y_train[:n].to_numpy()
-        # X_val_subset = X_val[:n]
-        # y_val_subset = y_val[:n].to_numpy()
 
+        start_time = time.time()
         regression.fit(X_train, y_train.to_numpy())
+        end_time = time.time()
 
-        if not np.isnan(regression.descent.w).any():
-            loss_histories[(descent_name, alpha)] = regression.loss_history
+        times.append(end_time - start_time)
+        iterations.append(len(regression.loss_history))
 
-        r2_train = calculate_r2_score(y_train, regression.predict(X_train))
-        r2_val = calculate_r2_score(y_val, regression.predict(X_val))
+    avg_time = np.mean(times)
+    avg_iterations = np.mean(iterations)
+    print(f"Average time: {avg_time} seconds")
+    print(f"Average iterations: {avg_iterations}")
+    print()
 
-        error_train = regression.descent.calc_loss(X_train, y_train)
-        error_val = regression.descent.calc_loss(X_val, y_val)
+    avg_times_list.append(avg_time)
+    avg_iterations_list.append(avg_iterations)
 
-        errors_train.append(error_train)
-        errors_val.append(error_val)
+plt.figure(figsize=(12, 6))
 
-        if error_val < best_loss:
-            best_loss = error_val
-            best_alpha = alpha
+plt.subplot(1, 2, 1)
+plt.plot(batch_sizes, avg_iterations_list)
+plt.xlabel("Batch size")
+plt.ylabel("Average number of iterations")
 
-    results[descent_name] = {
-        'best_alpha': best_alpha,
-        'best_r2_val': best_loss,
-        'errors_train': errors_train,
-        'errors_val': errors_val
-    }
-
-    print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, ошибка на валидационном наборе: {best_loss}")
-
-fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 8))
-
-for i, descent_name in enumerate(descent_names):
-    row = i // ncols
-    col = i % ncols
-
-    for alpha in alphas:
-        axs[row, col].plot(loss_histories[(descent_name, alpha)], label=f'α = {alpha}')
-
-    axs[row, col].set_title(f'Loss History for {descent_name}')
-    axs[row, col].set_xlabel('Iteration')
-    axs[row, col].set_ylabel('Loss')
-    axs[row, col].legend()
+plt.subplot(1, 2, 2)
+plt.plot(batch_sizes, avg_times_list)
+plt.xlabel("Batch size")
+plt.ylabel("Average training time (seconds)")
 
 plt.tight_layout()
 plt.show()
-
-#Задание 5.2
-fig, ax = plt.subplots(figsize=(10, 6))
-
-for descent_name, data in results.items():
-    ax.plot(data['iterations'], data['errors_train'], label=descent_name)
-
-ax.set_xlabel('Количество итераций')
-ax.set_ylabel('Ошибка')
-ax.set_title('Динамика изменения ошибки на обучающей выборке в зависимости от номера итерации')
-
-ax.legend()
-
-plt.tight_layout()
-plt.show()
-
-#Задание 6
-# batch_sizes = np.arange(5, 500, 10)
-# k = 5
-#
-# avg_times_list = []
-# avg_iterations_list = []
-#
-# for batch_size in batch_sizes:
-#     print(f"Batch size: {batch_size}")
-#     times = []
-#     iterations = []
-#
-#     for _ in range(k):
-#         descent_config = {
-#             'descent_name': 'stochastic',
-#             'kwargs': {
-#                 'dimension': dimension,
-#                 'batch_size': batch_size
-#             }
-#         }
-#
-#         regression = linear_regression.LinearRegression(
-#             descent_config=descent_config,
-#             tolerance=tolerance,
-#             max_iter=max_iter
-#         )
-#
-#         n = 5000
-#         X_train_subset = X_train[:n]
-#         y_train_subset = y_train[:n].to_numpy()
-#
-#         start_time = time.time()
-#         regression.fit(X_train_subset, y_train_subset)
-#         end_time = time.time()
-#
-#         times.append(end_time - start_time)
-#         iterations.append(len(regression.loss_history))
-#
-#     avg_time = np.mean(times)
-#     avg_iterations = np.mean(iterations)
-#     print(f"Average time: {avg_time} seconds")
-#     print(f"Average iterations: {avg_iterations}")
-#     print()
-#
-#     avg_times_list.append(avg_time)
-#     avg_iterations_list.append(avg_iterations)
-#
-# plt.figure(figsize=(12, 6))
-#
-# plt.subplot(1, 2, 1)
-# plt.plot(batch_sizes, avg_iterations_list)
-# plt.xlabel("Batch size")
-# plt.ylabel("Average number of iterations")
-#
-# plt.subplot(1, 2, 2)
-# plt.plot(batch_sizes, avg_times_list)
-# plt.xlabel("Batch size")
-# plt.ylabel("Average training time (seconds)")
-#
-# plt.tight_layout()
-# plt.show()
