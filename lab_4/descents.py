@@ -67,7 +67,6 @@ class StochasticDescent(VanillaGradientDescent):
 
         super().__init__(dimension, lambda_, loss_function)
         self.batch_size = batch_size
-        self.dimension = dimension
 
     def calc_gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         index = np.random.randint(y.shape[0], size=self.batch_size)
@@ -117,21 +116,19 @@ class Adam(VanillaGradientDescent):
 
 class BaseDescentReg(BaseDescent):
     def __init__(self, *args, mu: float = 0, **kwargs):
-        """
-        Инициализация базового класса для градиентного спуска с регуляризацией.
-        """
         super().__init__(*args, **kwargs)
 
         self.mu = mu
 
     def step(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        return self.update_weights(self.calc_gradient(x, y))
+        gradient = self.calc_gradient(x, y)
+        return self.update_weights(gradient)
 
     def update_weights(self, gradient: np.ndarray) -> np.ndarray:
         pass
 
     def calc_loss(self, x: np.ndarray, y: np.ndarray) -> float:
-        return np.mean(np.power((self.predict(x) - y), 2))
+        return np.mean(np.power((self.predict(x) - y), 2)) + self.mu / 2 * np.sum(np.power(self.w, 2))
 
     def predict(self, x: np.ndarray) -> np.ndarray:
         return x @ self.w
