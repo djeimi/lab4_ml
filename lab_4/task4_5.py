@@ -14,10 +14,13 @@ from sklearn.preprocessing import StandardScaler
 
 from sklearn.model_selection import train_test_split
 
-from sklearn.linear_model import Ridge
-from sklearn.metrics import mean_squared_error, r2_score
+import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.colors import Normalize
 
 import time
+
+from lab_4.descents import LossFunction
 
 sns.set(style='darkgrid')
 data = pd.read_csv('autos.csv')
@@ -146,67 +149,61 @@ def calculate_r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return 1 - (ss_res / ss_tot)
 
 
-# for i, descent_name in enumerate(descent_names):
-#     ax = axs[i // ncols, i % ncols]
-#
-#     descent_config = {
-#         'descent_name': descent_name,
-#         'kwargs': {
-#             'dimension': dimension
-#         }
-#     }
-#
-#     if descent_name == 'stochastic':
-#         descent_config['kwargs']['batch_size'] = batch_size
-#
-#     best_alpha = None
-#     best_loss = float('+inf')
-#     errors_train = []
-#     errors_val = []
-#
-#     for alpha in alphas:
-#         descent_config['kwargs']['lambda_'] = alpha
-#
-#         regression = linear_regression.LinearRegression(
-#             descent_config=descent_config,
-#             tolerance=tolerance,
-#             max_iter=max_iter
-#         )
-#
-#         # n = 5000
-#         # X_train_subset = X_train[:n]
-#         # y_train_subset = y_train[:n].to_numpy()
-#         # X_val_subset = X_val[:n]
-#         # y_val_subset = y_val[:n].to_numpy()
-#
-#         regression.fit(X_train, y_train.to_numpy())
-#
-#         if not np.isnan(regression.descent.w).any():
-#             loss_histories[(descent_name, alpha)] = regression.loss_history
-#
-#         r2_train = calculate_r2_score(y_train, regression.predict(X_train))
-#         r2_val = calculate_r2_score(y_val, regression.predict(X_val))
-#
-#         error_train = regression.descent.calc_loss(X_train, y_train)
-#         error_val = regression.descent.calc_loss(X_val, y_val)
-#
-#         errors_train.append(error_train)
-#         errors_val.append(error_val)
-#
-#         if error_val < best_loss:
-#             best_loss = error_val
-#             best_alpha = alpha
-#
-#             train_error_histories[descent_name] = regression.loss_history
-#
-#     results[descent_name] = {
-#         'best_alpha': best_alpha,
-#         'best_r2_val': best_loss,
-#         'errors_train': errors_train,
-#         'errors_val': errors_val
-#     }
-#
-#     print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, ошибка на валидационном наборе: {best_loss}")
+for i, descent_name in enumerate(descent_names):
+    ax = axs[i // ncols, i % ncols]
+
+    descent_config = {
+        'descent_name': descent_name,
+        'kwargs': {
+            'dimension': dimension
+        }
+    }
+
+    if descent_name == 'stochastic':
+        descent_config['kwargs']['batch_size'] = batch_size
+
+    best_alpha = None
+    best_loss = float('+inf')
+    errors_train = []
+    errors_val = []
+
+    for alpha in alphas:
+        descent_config['kwargs']['lambda_'] = alpha
+
+        regression = linear_regression.LinearRegression(
+            descent_config=descent_config,
+            tolerance=tolerance,
+            max_iter=max_iter
+        )
+
+        regression.fit(X_train, y_train.to_numpy())
+
+        if not np.isnan(regression.descent.w).any():
+            loss_histories[(descent_name, alpha)] = regression.loss_history
+
+        r2_train = calculate_r2_score(y_train, regression.predict(X_train))
+        r2_val = calculate_r2_score(y_val, regression.predict(X_val))
+
+        error_train = regression.descent.calc_loss(X_train, y_train)
+        error_val = regression.descent.calc_loss(X_val, y_val)
+
+        errors_train.append(error_train)
+        errors_val.append(error_val)
+
+        if error_val < best_loss:
+            best_loss = error_val
+            best_alpha = alpha
+
+            train_error_histories[descent_name] = regression.loss_history
+
+    results[descent_name] = {
+        'best_alpha': best_alpha,
+        'best_r2_val': best_loss,
+        'errors_train': errors_train,
+        'errors_val': errors_val
+    }
+
+    print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, ошибка на валидационном наборе: {best_loss}")
 
 fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 8))
 
@@ -310,8 +307,8 @@ for i, descent_name in enumerate(descent_names):
 #Задание 7
 mus = alphas
 
-results = {}
-loss_histories = {}
+results_with_reg = {}
+loss_histories_with_reg = {}
 
 train_error_histories = {}
 
@@ -349,7 +346,7 @@ for i, descent_name in enumerate(descent_names):
             regression.fit(X_train, y_train.to_numpy())
 
             if not np.isnan(regression.descent.w).any():
-                loss_histories[(descent_name, alpha, mu)] = regression.loss_history
+                loss_histories_with_reg[(descent_name, alpha, mu)] = regression.loss_history
 
             r2_train = calculate_r2_score(y_train, regression.predict(X_train))
             r2_val = calculate_r2_score(y_val, regression.predict(X_val))
@@ -367,7 +364,7 @@ for i, descent_name in enumerate(descent_names):
 
                 train_error_histories[descent_name] = regression.loss_history
 
-    results[descent_name] = {
+    results_with_reg[descent_name] = {
         'best_alpha': best_alpha,
         'best_mu': best_mu,
         'best_r2_val': best_loss,
@@ -377,24 +374,114 @@ for i, descent_name in enumerate(descent_names):
 
     print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, лучшее значение мю: {best_mu}, ошибка на валидационном наборе: {best_loss}")
 
-fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(10, 8))
+# fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
+#
+# for i, descent_name in enumerate(descent_names):
+#     row = i // 2
+#     col = i % 2
+#
+#     log_loss_history = np.log(loss_histories[(descent_name, results[descent_name]['best_alpha'])])
+#     axs[row, col * 2].plot(log_loss_history, label=f'α = {results[descent_name]["best_alpha"]}, μ = 0')
+#     axs[row, col * 2].set_title(f'Loss History for {descent_name} without regularization')
+#     axs[row, col * 2].set_xlabel('Iteration')
+#     axs[row, col * 2].set_ylabel('Loss')
+#     axs[row, col * 2].set_yscale("log")
+#     axs[row, col * 2].legend()
+#
+#     log_loss_history_with_reg = np.log(loss_histories_with_reg[(descent_name, results[descent_name]['best_alpha'], results[descent_name]['best_mu'])])
+#     axs[row, col * 2 + 1].plot(log_loss_history_with_reg, label=f'α = {results[descent_name]["best_alpha"]}, μ = {results[descent_name]["best_mu"]}')
+#     axs[row, col * 2 + 1].set_title(f'Loss History for {descent_name} with regularization')
+#     axs[row, col * 2 + 1].set_xlabel('Iteration')
+#     axs[row, col * 2 + 1].set_ylabel('Loss')
+#     axs[row, col * 2 + 1].set_yscale("log")
+#     axs[row, col * 2 + 1].legend()
+#
+# plt.tight_layout()
+# plt.show()
+
+fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
 
 for i, descent_name in enumerate(descent_names):
     row = i // ncols
     col = i % ncols
 
-    best_alpha = results[descent_name]['best_alpha']
-    best_mu = results[descent_name]['best_mu']
+    fig, ax = plt.subplots()
+    im = ax.imshow(results[descent_name]['errors_val'], cmap=cm.coolwarm, norm=Normalize(vmin=np.min(results[descent_name]['errors_val']), vmax=np.max(results[descent_name]['errors_val'])))
 
-    if (descent_name, best_alpha, best_mu) in loss_histories:
-        log_loss_history = np.log(loss_histories[(descent_name, best_alpha, best_mu)])
-        axs[row, col].plot(log_loss_history, label=f'α = {best_alpha}, μ = {best_mu}')
+    ax.set_xticks(np.arange(len(alphas)))
+    ax.set_xticklabels(alphas)
+    ax.set_yticks(np.arange(len(mus)))
+    ax.set_yticklabels(mus)
+    ax.set_xlabel('Λ')
+    ax.set_ylabel('Μ')
+    ax.set_title('Heatmap of Validation Error')
 
-    axs[row, col].set_title(f'Loss History for {descent_name}')
-    axs[row, col].set_xlabel('Iteration')
-    axs[row, col].set_ylabel('Loss')
-    axs[row, col].set_yscale("log")
-    axs[row, col].legend()
+    cbar = ax.figure.colorbar(im, ax=ax)
+    cbar.ax.set_ylabel('Validation Error', rotation=-90, va="bottom")
 
-plt.tight_layout()
 plt.show()
+
+#Задание8
+logCosh_results = {}
+logCosh_loss_histories = {}
+
+for i, descent_name in enumerate(descent_names):
+    ax = axs[i // ncols, i % ncols]
+
+    descent_config = {
+        'descent_name': descent_name,
+        'kwargs': {
+            'dimension': dimension,
+            'loss_function': LossFunction.LogCosh
+        }
+    }
+
+    if descent_name == 'stochastic':
+        descent_config['kwargs']['batch_size'] = batch_size
+
+    best_alpha = None
+    best_loss = float('+inf')
+    errors_train = []
+    errors_val = []
+
+    for alpha in alphas:
+        descent_config['kwargs']['lambda_'] = alpha
+
+        regression = linear_regression.LinearRegression(
+            descent_config=descent_config,
+            tolerance=tolerance,
+            max_iter=max_iter
+        )
+
+        regression.fit(X_train, y_train.to_numpy())
+
+        if not np.isnan(regression.descent.w).any():
+            loss_histories[(descent_name, alpha)] = regression.loss_history
+
+        r2_train = calculate_r2_score(y_train, regression.predict(X_train))
+        r2_val = calculate_r2_score(y_val, regression.predict(X_val))
+
+        error_train = regression.descent.calc_loss(X_train, y_train)
+        error_val = regression.descent.calc_loss(X_val, y_val)
+
+        errors_train.append(error_train)
+        errors_val.append(error_val)
+
+        if error_val < best_loss:
+            best_loss = error_val
+            best_alpha = alpha
+
+            train_error_histories[descent_name] = regression.loss_history
+
+    logCosh_results[descent_name] = {
+        'best_alpha': best_alpha,
+        'best_r2_val': best_loss,
+        'errors_train': errors_train,
+        'errors_val': errors_val
+    }
+
+    print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, с использованием LogCosh, ошибка на валидационном наборе: {best_loss}")
+
+for descent_name in enumerate(descent_names):
+    print(f"Лучшее значение Λ для {descent_name}: {logCosh_results[descent_name]['best_alpha']}, с использованием LogCosh, ошибка на валидационном наборе: {logCosh_results[descent_name]['best_r2_val']}")
+    print(f"Лучшее значение Λ для {descent_name}: {results[descent_name]['best_alpha']}, с использованием LogCosh, ошибка на валидационном наборе: {results[descent_name]['best_r2_val']}")

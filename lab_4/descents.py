@@ -57,8 +57,15 @@ class VanillaGradientDescent(BaseDescent):
 
     def calc_gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
         errors = self.predict(x) - y
-        gradient = 2 * x.T @ errors / x.shape[0]
-        return gradient
+
+        if self.loss_function is LossFunction.MSE:
+            gradient = 2 * x.T @ errors / x.shape[0]
+            return gradient
+        elif self.loss_function is LossFunction.LogCosh:
+            th_errors = np.tanh(errors)
+            gradient = 2 * x.T @ th_errors / x.shape[0]
+            return gradient
+
 
 
 class StochasticDescent(VanillaGradientDescent):
@@ -120,23 +127,10 @@ class BaseDescentReg(BaseDescent):
 
         self.mu = mu
 
-    def step(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        gradient = self.calc_gradient(x, y)
-        return self.update_weights(gradient)
-
-    def update_weights(self, gradient: np.ndarray) -> np.ndarray:
-        pass
-
-    def calc_loss(self, x: np.ndarray, y: np.ndarray) -> float:
-        return np.mean(np.power((self.predict(x) - y), 2)) + self.mu / 2 * np.sum(np.power(self.w, 2))
-
-    def predict(self, x: np.ndarray) -> np.ndarray:
-        return x @ self.w
-
     def calc_gradient(self, x: np.ndarray, y: np.ndarray) -> np.ndarray:
-        l2_gradient: np.ndarray = np.zeros_like(x.shape[1])  
-
-        return super().calc_gradient(x, y) + l2_gradient * self.mu
+        gradient = super().calc_gradient(x, y)
+        l2_gradient = self.mu * self.w
+        return gradient + l2_gradient
 
 
 class VanillaGradientDescentReg(BaseDescentReg, VanillaGradientDescent):
