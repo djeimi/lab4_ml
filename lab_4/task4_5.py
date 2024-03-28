@@ -1,4 +1,4 @@
-#Задания 4-5
+# Задания 4-5
 
 import numpy as np
 import pandas as pd
@@ -35,9 +35,9 @@ data['log_price'] = np.log(data[target])
 fig, axes = plt.subplots(1, 2)
 sns.histplot(data=data['log_price'], kde=True, ax=axes[0])
 sns.boxplot(data=data['log_price'], ax=axes[1])
-#Выбросы имеются
+# Выбросы имеются
 
-#Обработка выбросов
+# Обработка выбросов
 print("Количество строк до удаления выбросов:", len(data))
 
 Q1 = data['log_price'].quantile(0.25)
@@ -93,47 +93,48 @@ ncols = len(descent_names) // nrows if len(descent_names) % nrows == 0 else len(
 
 fig, axs = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 8))
 
-# for i, descent_name in enumerate(descent_names):
-#     ax = axs[i // ncols, i % ncols]
-#
-#     descent_config = {
-#         'descent_name': descent_name,
-#         'kwargs': {
-#             'dimension': dimension
-#         }
-#     }
-#
-#     if descent_name == 'stochastic':
-#         descent_config['kwargs']['batch_size'] = batch_size
-#
-#     regression = linear_regression.LinearRegression(
-#         descent_config=descent_config,
-#         tolerance=tolerance,
-#         max_iter=max_iter
-#     )
-#
-#     n = 5000
-#     X_train_subset = X_train[:n]
-#     y_train_subset = y_train[:n].to_numpy()
-#
-#     regression.fit(X_train_subset, y_train_subset)
-#
-#     ax.plot(regression.loss_history)
-#     ax.set_xlabel('Iteration')
-#     ax.set_ylabel('Loss')
-#     ax.set_title(f'Loss History for {descent_name}')
+for i, descent_name in enumerate(descent_names):
+    ax = axs[i // ncols, i % ncols]
+
+    descent_config = {
+        'descent_name': descent_name,
+        'kwargs': {
+            'dimension': dimension
+        }
+    }
+
+    if descent_name == 'stochastic':
+        descent_config['kwargs']['batch_size'] = batch_size
+
+    regression = linear_regression.LinearRegression(
+        descent_config=descent_config,
+        tolerance=tolerance,
+        max_iter=max_iter
+    )
+
+    n = 5000
+    X_train_subset = X_train[:n]
+    y_train_subset = y_train[:n].to_numpy()
+
+    regression.fit(X_train_subset, y_train_subset)
+
+    ax.plot(regression.loss_history)
+    ax.set_xlabel('Iteration')
+    ax.set_ylabel('Loss')
+    ax.set_title(f'Loss History for {descent_name}')
 #
 # plt.tight_layout()
-#plt.show()
-#Каждый метод лучше предыдущего из нашего списка.
+# plt.show()
+# Каждый метод лучше предыдущего из нашего списка.
 
-#Задание 5.1
+# Задание 5.1
 alphas = np.logspace(-3, 2, 5)
 
 results = {}
 loss_histories = {}
 
 train_error_histories = {}
+
 
 def calculate_r2_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
@@ -224,87 +225,87 @@ for i, descent_name in enumerate(descent_names):
 
 # plt.tight_layout()
 # plt.show()
-#два раза логарифм, чтобы лучше было видно
+# два раза логарифм, чтобы лучше было видно
 
-#Задание 5.2
-# fig, ax = plt.subplots(figsize=(10, 6))
-#
-# for descent_name in descent_names:
-#     best_alpha = results[descent_name]['best_alpha']
-#     if (descent_name, best_alpha) in loss_histories:
-#         ax.plot(loss_histories[(descent_name, best_alpha)], label=f'{descent_name}, α={best_alpha}')
-#
-# ax.set_xlabel('Iteration')
-# ax.set_ylabel('Training Error')
-# ax.set_yscale('log')
-# ax.legend()
+# Задание 5.2
+fig, ax = plt.subplots(figsize=(10, 6))
+
+for descent_name in descent_names:
+    best_alpha = results[descent_name]['best_alpha']
+    if (descent_name, best_alpha) in loss_histories:
+        ax.plot(loss_histories[(descent_name, best_alpha)], label=f'{descent_name}, α={best_alpha}')
+
+ax.set_xlabel('Iteration')
+ax.set_ylabel('Training Error')
+ax.set_yscale('log')
+ax.legend()
 
 # plt.tight_layout()
 # plt.show()
 
-#Задание 6
-# batch_sizes = np.arange(5, 500, 10)
-# k = 5
-#
-# avg_times_list = []
-# avg_iterations_list = []
-#
-# for batch_size in batch_sizes:
-#     print(f"Batch size: {batch_size}")
-#     times = []
-#     iterations = []
-#
-#     for _ in range(k):
-#         descent_config = {
-#             'descent_name': 'stochastic',
-#             'kwargs': {
-#                 'dimension': dimension,
-#                 'batch_size': batch_size
-#             }
-#         }
-#
-#         regression = linear_regression.LinearRegression(
-#             descent_config=descent_config,
-#             tolerance=tolerance,
-#             max_iter=max_iter
-#         )
-#
-#         # n = 5000
-#         # X_train_subset = X_train[:n]
-#         # y_train_subset = y_train[:n].to_numpy()
-#
-#         start_time = time.time()
-#         regression.fit(X_train, y_train.to_numpy())
-#         end_time = time.time()
-#
-#         times.append(end_time - start_time)
-#         iterations.append(len(regression.loss_history))
-#
-#     avg_time = np.mean(times)
-#     avg_iterations = np.mean(iterations)
-#     print(f"Average time: {avg_time} seconds")
-#     print(f"Average iterations: {avg_iterations}")
-#     print()
-#
-#     avg_times_list.append(avg_time)
-#     avg_iterations_list.append(avg_iterations)
-#
-# plt.figure(figsize=(12, 6))
-#
-# plt.subplot(1, 2, 1)
-# plt.plot(batch_sizes, avg_iterations_list)
-# plt.xlabel("Batch size")
-# plt.ylabel("Average number of iterations")
-#
-# plt.subplot(1, 2, 2)
-# plt.plot(batch_sizes, avg_times_list)
-# plt.xlabel("Batch size")
-# plt.ylabel("Average training time (seconds)")
+# Задание 6
+batch_sizes = np.arange(5, 500, 10)
+k = 5
+
+avg_times_list = []
+avg_iterations_list = []
+
+for batch_size in batch_sizes:
+    print(f"Batch size: {batch_size}")
+    times = []
+    iterations = []
+
+    for _ in range(k):
+        descent_config = {
+            'descent_name': 'stochastic',
+            'kwargs': {
+                'dimension': dimension,
+                'batch_size': batch_size
+            }
+        }
+
+        regression = linear_regression.LinearRegression(
+            descent_config=descent_config,
+            tolerance=tolerance,
+            max_iter=max_iter
+        )
+
+        # n = 5000
+        # X_train_subset = X_train[:n]
+        # y_train_subset = y_train[:n].to_numpy()
+
+        start_time = time.time()
+        regression.fit(X_train, y_train.to_numpy())
+        end_time = time.time()
+
+        times.append(end_time - start_time)
+        iterations.append(len(regression.loss_history))
+
+    avg_time = np.mean(times)
+    avg_iterations = np.mean(iterations)
+    print(f"Average time: {avg_time} seconds")
+    print(f"Average iterations: {avg_iterations}")
+    print()
+
+    avg_times_list.append(avg_time)
+    avg_iterations_list.append(avg_iterations)
+
+plt.figure(figsize=(12, 6))
+
+plt.subplot(1, 2, 1)
+plt.plot(batch_sizes, avg_iterations_list)
+plt.xlabel("Batch size")
+plt.ylabel("Average number of iterations")
+
+plt.subplot(1, 2, 2)
+plt.plot(batch_sizes, avg_times_list)
+plt.xlabel("Batch size")
+plt.ylabel("Average training time (seconds)")
 #
 # plt.tight_layout()
 # plt.show()
 
-#Задание 7
+# Задание 7
 mus = alphas
 
 results_with_reg = {}
@@ -372,29 +373,32 @@ for i, descent_name in enumerate(descent_names):
         'errors_val': errors_val
     }
 
-    print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, лучшее значение мю: {best_mu}, ошибка на валидационном наборе: {best_loss}")
+    print(
+        f"Лучшее значение Λ для {descent_name}: {best_alpha}, лучшее значение мю: {best_mu}, ошибка на валидационном наборе: {best_loss}")
 
-# fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
-#
-# for i, descent_name in enumerate(descent_names):
-#     row = i // 2
-#     col = i % 2
-#
-#     log_loss_history = np.log(loss_histories[(descent_name, results[descent_name]['best_alpha'])])
-#     axs[row, col * 2].plot(log_loss_history, label=f'α = {results[descent_name]["best_alpha"]}, μ = 0')
-#     axs[row, col * 2].set_title(f'Loss History for {descent_name} without regularization')
-#     axs[row, col * 2].set_xlabel('Iteration')
-#     axs[row, col * 2].set_ylabel('Loss')
-#     axs[row, col * 2].set_yscale("log")
-#     axs[row, col * 2].legend()
-#
-#     log_loss_history_with_reg = np.log(loss_histories_with_reg[(descent_name, results[descent_name]['best_alpha'], results[descent_name]['best_mu'])])
-#     axs[row, col * 2 + 1].plot(log_loss_history_with_reg, label=f'α = {results[descent_name]["best_alpha"]}, μ = {results[descent_name]["best_mu"]}')
-#     axs[row, col * 2 + 1].set_title(f'Loss History for {descent_name} with regularization')
-#     axs[row, col * 2 + 1].set_xlabel('Iteration')
-#     axs[row, col * 2 + 1].set_ylabel('Loss')
-#     axs[row, col * 2 + 1].set_yscale("log")
-#     axs[row, col * 2 + 1].legend()
+fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
+
+for i, descent_name in enumerate(descent_names):
+    row = i // 2
+    col = i % 2
+
+    log_loss_history = np.log(loss_histories[(descent_name, results[descent_name]['best_alpha'])])
+    axs[row, col * 2].plot(log_loss_history, label=f'α = {results[descent_name]["best_alpha"]}, μ = 0')
+    axs[row, col * 2].set_title(f'Loss History for {descent_name} without regularization')
+    axs[row, col * 2].set_xlabel('Iteration')
+    axs[row, col * 2].set_ylabel('Loss')
+    axs[row, col * 2].set_yscale("log")
+    axs[row, col * 2].legend()
+
+    log_loss_history_with_reg = np.log(loss_histories_with_reg[(descent_name, results[descent_name]['best_alpha'],
+                                                                results[descent_name]['best_mu'])])
+    axs[row, col * 2 + 1].plot(log_loss_history_with_reg, label=
+    f'α = {results[descent_name]["best_alpha"]}, μ = {results[descent_name]["best_mu"]}')
+    axs[row, col * 2 + 1].set_title(f'Loss History for {descent_name} with regularization')
+    axs[row, col * 2 + 1].set_xlabel('Iteration')
+    axs[row, col * 2 + 1].set_ylabel('Loss')
+    axs[row, col * 2 + 1].set_yscale("log")
+    axs[row, col * 2 + 1].legend()
 #
 # plt.tight_layout()
 # plt.show()
@@ -406,7 +410,9 @@ for i, descent_name in enumerate(descent_names):
     col = i % ncols
 
     fig, ax = plt.subplots()
-    im = ax.imshow(results[descent_name]['errors_val'], cmap=cm.coolwarm, norm=Normalize(vmin=np.min(results[descent_name]['errors_val']), vmax=np.max(results[descent_name]['errors_val'])))
+    im = ax.imshow(results[descent_name]['errors_val'], cmap=cm.coolwarm,
+                   norm=Normalize(vmin=np.min(results[descent_name]['errors_val']),
+                                  vmax=np.max(results[descent_name]['errors_val'])))
 
     ax.set_xticks(np.arange(len(alphas)))
     ax.set_xticklabels(alphas)
@@ -421,7 +427,7 @@ for i, descent_name in enumerate(descent_names):
 
 plt.show()
 
-#Задание8
+# Задание8
 logCosh_results = {}
 logCosh_loss_histories = {}
 
@@ -480,8 +486,11 @@ for i, descent_name in enumerate(descent_names):
         'errors_val': errors_val
     }
 
-    print(f"Лучшее значение Λ для {descent_name}: {best_alpha}, с использованием LogCosh, ошибка на валидационном наборе: {best_loss}")
+    print(
+        f"Лучшее значение Λ для {descent_name}: {best_alpha}, с использованием LogCosh, ошибка на валидационном наборе: {best_loss}")
 
 for descent_name in enumerate(descent_names):
-    print(f"Лучшее значение Λ для {descent_name}: {logCosh_results[descent_name]['best_alpha']}, с использованием LogCosh, ошибка на валидационном наборе: {logCosh_results[descent_name]['best_r2_val']}")
-    print(f"Лучшее значение Λ для {descent_name}: {results[descent_name]['best_alpha']}, с использованием LogCosh, ошибка на валидационном наборе: {results[descent_name]['best_r2_val']}")
+    print(
+        f"Лучшее значение Λ для {descent_name}: {logCosh_results[descent_name]['best_alpha']}, с использованием LogCosh, ошибка на валидационном наборе: {logCosh_results[descent_name]['best_r2_val']}")
+    print(
+        f"Лучшее значение Λ для {descent_name}: {results[descent_name]['best_alpha']}, с использованием LogCosh, ошибка на валидационном наборе: {results[descent_name]['best_r2_val']}")
